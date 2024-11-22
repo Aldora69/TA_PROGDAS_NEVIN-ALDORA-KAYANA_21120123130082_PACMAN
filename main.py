@@ -1,7 +1,7 @@
 import pygame
 import random
 pygame.init()
-# Constants
+
 WIDTH = 28
 HEIGHT = 31
 TILE_SIZE = 20
@@ -14,21 +14,17 @@ POWER_PELLET = 'O'
 LARGE_TEXT = pygame.font.Font("Pacmania Italic.otf", 50)
 SMALL_TEXT = pygame.font.Font("Pacmania Italic.otf", 15)
 
-# Movement directions
 dx = [0, 0, -1, 1]
 dy = [-1, 1, 0, 0]
 
-# Initialize pygame
 pygame.init()
     
-# Define colors
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 YELLOW = (255, 255, 0)
 BLUE = (0, 0, 255)
 RED = (255, 0, 0)
 
-# Entity Class
 class Entity:
     def __init__(self, start_x, start_y, symbol):
         self.x = start_x
@@ -42,7 +38,6 @@ class Entity:
         self.x = new_x
         self.y = new_y
 
-# Pacman Class
 class Pacman(Entity):
     def __init__(self, start_x, start_y):
         super().__init__(start_x, start_y, PACMAN)
@@ -77,13 +72,20 @@ class Pacman(Entity):
     def is_powered(self):
         return self.power_mode
 
-# Ghost Class
 class Ghost(Entity):
     def __init__(self, start_x, start_y):
         super().__init__(start_x, start_y, GHOST)
         self.direction = random.randint(0, 3)
+        self.move_delay = 0.5
+        self.move_counter = 0
 
     def move(self, maze):
+        if self.move_counter < self.move_delay:
+            self.move_counter += 1
+            return
+
+        self.move_counter = 0
+
         new_x = self.x + dx[self.direction]
         new_y = self.y + dy[self.direction]
 
@@ -94,17 +96,15 @@ class Ghost(Entity):
             self.direction = random.randint(0, 3)
 
 
-
-# Game Class
 class Game:
     def __init__(self):
         self.maze = []
         self.pacman = Pacman(14, 23)
-        self.ghosts = [Ghost(6, 11)]
+        self.ghosts = [Ghost(6, 11), Ghost(9, 15), Ghost(15, 21), Ghost(20, 25)]
         self.dots_remaining = 0
         self.game_over = False
         self.home_screen = True
-        self.paused = False  # Tambahkan atribut untuk mengelola status pause
+        self.paused = False 
         self.font = pygame.font.SysFont('Courier', 20)
 
         self.initialize_maze()
@@ -122,15 +122,12 @@ class Game:
 
    
     def draw_home_screen(self, window):
-        """Menggambar tampilan home screen."""
         window.fill(BLACK)
 
-        # Teks Judul
         title_text = LARGE_TEXT.render("PACMAN", True, YELLOW)
         title_rect = title_text.get_rect(center=(WIDTH * TILE_SIZE // 2, HEIGHT * TILE_SIZE // 3))
         window.blit(title_text, title_rect)
 
-        # Instruksi
         start_text = SMALL_TEXT.render("Press SPACE to Start", True, WHITE)
         start_rect = start_text.get_rect(center=(WIDTH * TILE_SIZE // 2, HEIGHT * TILE_SIZE // 2))
         window.blit(start_text, start_rect)
@@ -180,18 +177,17 @@ class Game:
     def handle_input(self):
         keys = pygame.key.get_pressed()
 
-        # Pause logic
         if keys[pygame.K_p]:
-            pygame.time.wait(200)  # Tambahkan delay untuk mencegah input berulang
-            self.paused = not self.paused  # Toggle pause state
+            pygame.time.wait(200) 
+            self.paused = not self.paused 
 
         if self.paused:
-            return  # Jika permainan sedang pause, abaikan input lainnya
+            return 
 
         if self.game_over:
-            if keys[pygame.K_r]:  # Restart game
-                self.__init__()  # Reinitialize game
-            elif keys[pygame.K_ESCAPE]:  # Exit game
+            if keys[pygame.K_r]:  
+                self.__init__() 
+            elif keys[pygame.K_ESCAPE]: 
                 pygame.quit()
                 exit()
 
@@ -215,12 +211,11 @@ class Game:
 
     def update(self):
         if self.game_over or self.paused:
-            return  # Jangan update jika game over atau pause
+            return 
 
         self.pacman.update_power_mode()
         pac_x, pac_y = self.pacman.get_position()
 
-        # Check for collisions with dots and power pellets
         if self.maze[pac_y][pac_x] == DOT:
             self.maze[pac_y] = self.maze[pac_y][:pac_x] + EMPTY + self.maze[pac_y][pac_x + 1:]
             self.pacman.add_score(10)
@@ -230,7 +225,6 @@ class Game:
             self.pacman.add_score(50)
             self.pacman.activate_power_mode()
 
-        # Check if ghosts catch pacman
         for ghost in self.ghosts:
             ghost.move(self.maze)
             if ghost.get_position() == (pac_x, pac_y):
@@ -244,17 +238,14 @@ class Game:
     def draw_game_over_screen(self, window):
         window.fill(BLACK)
 
-        # Teks Game Over
         game_over_text = LARGE_TEXT.render("GAME OVER", True, RED)
         game_over_rect = game_over_text.get_rect(center=(WIDTH * TILE_SIZE // 2, HEIGHT * TILE_SIZE // 3))
         window.blit(game_over_text, game_over_rect)
 
-        # Tampilkan skor akhir
         score_text = SMALL_TEXT.render(f"Final Score: {self.pacman.get_score()}", True, WHITE)
         score_rect = score_text.get_rect(center=(WIDTH * TILE_SIZE // 2, HEIGHT * TILE_SIZE // 2))
         window.blit(score_text, score_rect)
 
-        # Instruksi untuk restart/keluar
         restart_text = SMALL_TEXT.render("Press R to Restart", True, WHITE)
         restart_rect = restart_text.get_rect(center=(WIDTH * TILE_SIZE // 2, HEIGHT * TILE_SIZE // 2 + 40))
         window.blit(restart_text, restart_rect)
@@ -271,12 +262,11 @@ class Game:
         elif self.game_over:
             self.draw_game_over_screen(window)
         elif self.paused:
-            self.draw_pause_screen(window)  # Tampilkan layar pause
+            self.draw_pause_screen(window) 
         else:
             window.fill(BLACK)
             tile_size = TILE_SIZE
 
-            # Gambar maze
             for y in range(HEIGHT):
                 for x in range(WIDTH):
                     if self.maze[y][x] == WALL:
@@ -286,25 +276,18 @@ class Game:
                     elif self.maze[y][x] == POWER_PELLET:
                         pygame.draw.circle(window, YELLOW, (x * tile_size + tile_size // 2, y * tile_size + tile_size // 2), tile_size // 3)
 
-            # Gambar Pacman
             pacman_x, pacman_y = self.pacman.get_position()
             pygame.draw.circle(window, YELLOW, (pacman_x * tile_size + tile_size // 2, pacman_y * tile_size + tile_size // 2), tile_size // 2)
 
-            # Gambar Ghosts
             for ghost in self.ghosts:
                 ghost_x, ghost_y = ghost.get_position()
                 pygame.draw.circle(window, RED, (ghost_x * tile_size + tile_size // 2, ghost_y * tile_size + tile_size // 2), tile_size // 2)
 
-            # Gambar Skor
             score_text = self.font.render(f"Score: {self.pacman.get_score()}", True, WHITE)
             window.blit(score_text, (10, HEIGHT * TILE_SIZE + 5))
 
             pygame.display.flip()
 
-
-
-
-# Main loop
 def main():
     window = pygame.display.set_mode((WIDTH * TILE_SIZE, HEIGHT * TILE_SIZE + 40))
     pygame.display.set_caption("Pacman")
@@ -318,10 +301,7 @@ def main():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 return
-
-        # if not game.game_over:
-        #     game.handle_input()
-        #     game.update()
+            
         game.handle_input()
 
         if not game.home_screen:
